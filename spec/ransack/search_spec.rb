@@ -146,6 +146,15 @@ module Ransack
         expect(s.result.to_sql).to include 'published'
       end
 
+      it 'add `distinct` on has_many associations search dynamically' do
+        pending("related to issue #1050")
+        s1 = Search.new(Person, name_eq: "foo", articles_title_eq: "")
+        expect(s1.result.to_sql).to eq("SELECT \"people\".* FROM \"people\" WHERE \"people\".\"name\" = 'foo' ORDER BY \"people\".\"id\" DESC")
+
+        s2 = Search.new(Person, name_eq: "foo", articles_title_eq: "bar")
+        expect(s2.result.to_sql).to eq("SELECT DISTINCT \"people\".* FROM \"people\" LEFT OUTER JOIN \"articles\" ON \"articles\".\"person_id\" = \"people\".\"id\" AND ('default_scope' = 'default_scope') WHERE (\"people\".\"name\" = 'foo' AND \"articles\".\"title\" = 'bar') ORDER BY \"people\".\"id\" DESC")
+      end
+
       it 'discards empty conditions' do
         s = Search.new(Person, children_name_eq: '')
         condition = s.base[:children_name_eq]
